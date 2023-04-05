@@ -49,7 +49,7 @@ public abstract class AlmightyAction extends AnAction {
 		Editor editor = event.getData(CommonDataKeys.EDITOR);
 		if (editor == null)
 			return Optional.empty();
-		
+
 		PsiElement clickedElement = PsiUtilBase.getElementAtCaret(editor);
 		PsiJavaDocumentedElement clickedMember = PsiTreeUtil.getParentOfType(clickedElement, PsiJavaDocumentedElement.class, false);
 		return Optional.ofNullable(clickedMember);
@@ -57,7 +57,7 @@ public abstract class AlmightyAction extends AnAction {
 
 	protected String doSomeMagic(List<ChatMessage> messages) {
 		try {
-			OpenAiService service = new OpenAiService("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");
+			OpenAiService service = new OpenAiService("YOUR_API_KEY");
 			ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
 				.messages(messages)
 				.model("gpt-3.5-turbo")
