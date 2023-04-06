@@ -8,6 +8,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -23,6 +26,7 @@ import com.theokanning.openai.service.OpenAiService;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.time.Duration;
@@ -97,5 +101,19 @@ public abstract class AlmightyAction extends AnAction {
 				);
 			}
 		}
+	}
+
+	protected void backgroundMagic(Project project, List<ChatMessage> chatMessages, String taskName) {
+		Task.Backgroundable task = new Task.Backgroundable(project, taskName, true) {
+			public void run(@NotNull ProgressIndicator indicator) {
+				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, "Doing my magic..."));
+				indicator.setText("Contacting OpenAI...");
+				String answer = doSomeMagic(chatMessages);
+				indicator.setText("Rendering results...");
+				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, answer));
+			}
+		};
+
+		ProgressManager.getInstance().run(task);
 	}
 }

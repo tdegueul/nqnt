@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Optional;
 
-public class CodeReviewAction extends AlmightyAction {
+public class FindBugAction extends AlmightyAction {
 	@Override
 	public void actionPerformed(@NotNull AnActionEvent event) {
 		Project project = event.getProject();
@@ -21,10 +21,10 @@ public class CodeReviewAction extends AlmightyAction {
 		selectedText.ifPresent(text -> {
 			List<ChatMessage> chatMessages = List.of(
 				new ChatMessage("system", Prompts.YOUR_DESTINY),
-				new ChatMessage("user", Prompts.format(Prompts.CODE_REVIEW, text))
+				new ChatMessage("user", Prompts.format(Prompts.FIND_BUG, text))
 			);
 
-			backgroundMagic(project, chatMessages, "Reviewing code");
+			backgroundMagic(project, chatMessages, "Finding bugs");
 		});
 	}
 }

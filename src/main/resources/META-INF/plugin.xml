@@ -44,5 +44,9 @@
                 text="Generate Documentation">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
+        <action id="com.github.nqnt.actions.FindBugAction" class="com.github.nqnt.actions.FindBugAction"
+                text="Find Bug">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
     </actions>
 </idea-plugin>

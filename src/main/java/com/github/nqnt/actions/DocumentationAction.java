@@ -32,7 +32,7 @@ public class DocumentationAction extends AlmightyAction {
 				new ChatMessage("user", Prompts.format(Prompts.DOCUMENTATION, text))
 			);
 
-			Task.Backgroundable task = new Task.Backgroundable(project, "Processing Documentation", true) {
+			Task.Backgroundable task = new Task.Backgroundable(project, "Generating documentation", true) {
 				public void run(@NotNull ProgressIndicator indicator) {
 					indicator.setText("Contacting OpenAI...");
 					String answer = doSomeMagic(chatMessages);
