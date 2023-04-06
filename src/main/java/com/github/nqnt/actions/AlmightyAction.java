@@ -1,5 +1,6 @@
 package com.github.nqnt.actions;
 
+import com.github.nqnt.settings.NqntSettingsState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -62,7 +63,8 @@ public abstract class AlmightyAction extends AnAction {
 
 	protected String doSomeMagic(List<ChatMessage> messages) {
 		try {
-			OpenAiService service = new OpenAiService("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", Duration.ofSeconds(30));
+			NqntSettingsState state = NqntSettingsState.getInstance();
+			OpenAiService service = new OpenAiService(state.apiKey, Duration.ofSeconds(state.timeout));
 			ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
 				.messages(messages)
 				.model("gpt-3.5-turbo")
