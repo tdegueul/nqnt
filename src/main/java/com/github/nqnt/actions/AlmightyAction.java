@@ -3,6 +3,8 @@ package com.github.nqnt.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -22,6 +24,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 import javax.swing.*;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,14 +53,16 @@ public abstract class AlmightyAction extends AnAction {
 		if (editor == null)
 			return Optional.empty();
 
-		PsiElement clickedElement = PsiUtilBase.getElementAtCaret(editor);
-		PsiJavaDocumentedElement clickedMember = PsiTreeUtil.getParentOfType(clickedElement, PsiJavaDocumentedElement.class, false);
-		return Optional.ofNullable(clickedMember);
+		return ReadAction.compute(() -> {
+			PsiElement clickedElement = PsiUtilBase.getElementAtCaret(editor);
+			PsiJavaDocumentedElement clickedMember = PsiTreeUtil.getParentOfType(clickedElement, PsiJavaDocumentedElement.class, false);
+			return Optional.ofNullable(clickedMember);
+		});
 	}
 
 	protected String doSomeMagic(List<ChatMessage> messages) {
 		try {
-			OpenAiService service = new OpenAiService("YOUR_API_KEY");
+			OpenAiService service = new OpenAiService("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", Duration.ofSeconds(30));
 			ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
 				.messages(messages)
 				.model("gpt-3.5-turbo")
@@ -76,16 +81,18 @@ public abstract class AlmightyAction extends AnAction {
 		if (!answer.isEmpty()) {
 			ToolWindow almightyWindow = ToolWindowManager.getInstance(project).getToolWindow("AlmightyViewer");
 			if (almightyWindow != null) {
-				almightyWindow.show(() -> {
-					Content content = almightyWindow.getContentManager().getContent(0);
-					if (content.getComponent() instanceof JEditorPane pane) {
-						Parser parser = Parser.builder().build();
-						Node document = parser.parse(answer);
-						HtmlRenderer renderer = HtmlRenderer.builder().build();
-						String htmlAnswer = renderer.render(document);
-						pane.setText(htmlAnswer);
-					}
-				});
+				ApplicationManager.getApplication().invokeLater(() ->
+					almightyWindow.show(() -> {
+						Content content = almightyWindow.getContentManager().getContent(0);
+						if (content.getComponent() instanceof JEditorPane pane) {
+							Parser parser = Parser.builder().build();
+							Node document = parser.parse(answer);
+							HtmlRenderer renderer = HtmlRenderer.builder().build();
+							String htmlAnswer = renderer.render(document);
+							pane.setText(htmlAnswer);
+						}
+					})
+				);
 			}
 		}
 	}
