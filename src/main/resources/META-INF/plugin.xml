@@ -48,5 +48,9 @@
                 text="Find Bug">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
+        <action id="com.github.nqnt.actions.GenerateTestsAction" class="com.github.nqnt.actions.GenerateTestsAction"
+                text="Generate Tests">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
     </actions>
 </idea-plugin>

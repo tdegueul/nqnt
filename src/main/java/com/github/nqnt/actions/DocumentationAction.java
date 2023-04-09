@@ -38,7 +38,7 @@ public class DocumentationAction extends AlmightyAction {
 					String answer = doSomeMagic(chatMessages);
 
 					indicator.setText("Rendering results...");
-					renderYourMagic(project, answer);
+					renderYourMagic(project, answer, false);
 
 					indicator.setText("Patching code...");
 					Optional<PsiJavaDocumentedElement> element = getSelectedElement(event);

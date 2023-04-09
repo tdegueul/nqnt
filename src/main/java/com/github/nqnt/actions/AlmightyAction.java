@@ -23,6 +23,7 @@ import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -32,6 +33,7 @@ import javax.swing.*;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public abstract class AlmightyAction extends AnAction {
 	protected Optional<String> getSelectedText(AnActionEvent event) {
@@ -79,11 +81,11 @@ public abstract class AlmightyAction extends AnAction {
 				? ""
 				: choices.get(0).getMessage().getContent();
 		} catch (Exception e) {
-			return "An error occured: " + e.getMessage();
+			return "An error occured: " + ExceptionUtils.getStackTrace(e);
 		}
 	}
 
-	protected void renderYourMagic(Project project, String answer) {
+	protected void renderYourMagic(Project project, String answer, boolean markdown) {
 		if (!answer.isEmpty()) {
 			ToolWindow almightyWindow = ToolWindowManager.getInstance(project).getToolWindow("AlmightyViewer");
 			if (almightyWindow != null) {
@@ -91,11 +93,15 @@ public abstract class AlmightyAction extends AnAction {
 					almightyWindow.show(() -> {
 						Content content = almightyWindow.getContentManager().getContent(0);
 						if (content.getComponent() instanceof JEditorPane pane) {
-							Parser parser = Parser.builder().build();
-							Node document = parser.parse(answer);
-							HtmlRenderer renderer = HtmlRenderer.builder().build();
-							String htmlAnswer = renderer.render(document);
-							pane.setText(htmlAnswer);
+							if (markdown) {
+								Parser parser = Parser.builder().build();
+								Node document = parser.parse(answer);
+								HtmlRenderer renderer = HtmlRenderer.builder().build();
+								String htmlAnswer = renderer.render(document);
+								pane.setText(htmlAnswer);
+							} else {
+								pane.setText(answer);
+							}
 						}
 					})
 				);
@@ -106,14 +112,26 @@ public abstract class AlmightyAction extends AnAction {
 	protected void backgroundMagic(Project project, List<ChatMessage> chatMessages, String taskName) {
 		Task.Backgroundable task = new Task.Backgroundable(project, taskName, true) {
 			public void run(@NotNull ProgressIndicator indicator) {
-				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, "Doing my magic..."));
 				indicator.setText("Contacting OpenAI...");
+				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, formatChatMessages(chatMessages), true));
 				String answer = doSomeMagic(chatMessages);
 				indicator.setText("Rendering results...");
-				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, answer));
+				ApplicationManager.getApplication().invokeLater(() -> renderYourMagic(project, answer, true));
 			}
 		};
 
 		ProgressManager.getInstance().run(task);
+	}
+
+	protected String formatChatMessages(List<ChatMessage> chatMessages) {
+		return """
+			# System prompt
+			%s
+			# User prompts
+			%s
+			""".formatted(
+				chatMessages.stream().filter(m -> m.getRole().equals("system")).map(m -> "- " + m.getContent()).collect(Collectors.joining("\n")),
+				chatMessages.stream().filter(m -> m.getRole().equals("user")).map(m -> "- " + m.getContent()).collect(Collectors.joining("\n"))
+		);
 	}
 }
