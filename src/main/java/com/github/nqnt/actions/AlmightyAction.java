@@ -1,13 +1,14 @@
 package com.github.nqnt.actions;
 
 import com.github.nqnt.settings.NqntSettingsState;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -15,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.Content;
@@ -36,33 +37,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class AlmightyAction extends AnAction {
-	protected Optional<String> getSelectedText(AnActionEvent event) {
-		Editor editor = event.getData(CommonDataKeys.EDITOR);
-
-		if (editor != null) {
-			// If there is some text selected, retrieve it
-			SelectionModel selectionModel = editor.getSelectionModel();
-			String selected = selectionModel.getSelectedText();
-			if (selected != null && !selected.isEmpty())
-				return Optional.of(selected);
-
-			// Otherwise, if we clicked on some element, retrieve its text
-			Optional<PsiJavaDocumentedElement> clickedMember = getSelectedElement(event);
-			if (clickedMember.isPresent())
-				return Optional.of(clickedMember.get().getText());
-		}
-
-		return Optional.empty();
-	}
-
-	protected Optional<PsiJavaDocumentedElement> getSelectedElement(AnActionEvent event) {
+	protected Optional<PsiNamedElement> getSelectedElement(AnActionEvent event) {
 		Editor editor = event.getData(CommonDataKeys.EDITOR);
 		if (editor == null)
 			return Optional.empty();
 
 		return ReadAction.compute(() -> {
 			PsiElement clickedElement = PsiUtilBase.getElementAtCaret(editor);
-			PsiJavaDocumentedElement clickedMember = PsiTreeUtil.getParentOfType(clickedElement, PsiJavaDocumentedElement.class, false);
+			PsiNamedElement clickedMember = PsiTreeUtil.getParentOfType(clickedElement, PsiNamedElement.class, false);
 			return Optional.ofNullable(clickedMember);
 		});
 	}
@@ -73,7 +55,10 @@ public abstract class AlmightyAction extends AnAction {
 			OpenAiService service = new OpenAiService(state.apiKey, Duration.ofSeconds(state.timeout));
 			ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
 				.messages(messages)
-				.model("gpt-3.5-turbo")
+				.model("gpt-4")
+				.stream(false)
+				.n(1)
+				.maxTokens(1500)
 				.build();
 			List<ChatCompletionChoice> choices = service.createChatCompletion(completionRequest).getChoices();
 
@@ -133,5 +118,15 @@ public abstract class AlmightyAction extends AnAction {
 				chatMessages.stream().filter(m -> m.getRole().equals("system")).map(m -> "- " + m.getContent()).collect(Collectors.joining("\n")),
 				chatMessages.stream().filter(m -> m.getRole().equals("user")).map(m -> "- " + m.getContent()).collect(Collectors.joining("\n"))
 		);
+	}
+
+	protected ConsoleView getConsole(Project project) {
+		ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow("AlmightyConsole");
+		Content content = window.getContentManager().getContent(0);
+		return (ConsoleView) content.getComponent();
+	}
+
+	protected void debug(Project project, String message) {
+		getConsole(project).print("%s%n".formatted(message), ConsoleViewContentType.LOG_DEBUG_OUTPUT);
 	}
 }

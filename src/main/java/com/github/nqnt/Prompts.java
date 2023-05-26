@@ -2,13 +2,14 @@ package com.github.nqnt;
 
 public class Prompts {
 	public static final String YOUR_DESTINY = """
-    Act as a worldwide expert in Java programming with perfect knowledge in software engineering, programming, and latest Java features.
-    Answer questions as concisely as possible.
-    Don't output code unless explicitly asked.""";
+    Act as a worldwide expert in Java 17 programming with perfect knowledge of every language feature, popular libraries,
+    clean code, SOLID principles, and software engineering principles.
+    Answer questions as concisely as possible.""";
 
 	public static final String CODE_REVIEW = """
 		Conduct a thorough code review of the following code. List all points of improvement, without pre-text or post-text.
 		Focus on code quality, modularity, readability, correctness, language features, and style.
+		Only output what is wrong.
 		Answer in Markdown.
 		```
 		the_code

@@ -27,6 +27,7 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="AlmightyViewer" anchor="right" factoryClass="com.github.nqnt.views.AlmightyWindowFactory"/>
+        <toolWindow id="AlmightyConsole" anchor="bottom" factoryClass="com.github.nqnt.views.AlmightyConsoleFactory"/>
         <applicationConfigurable
                 parentId="tools"
                 instance="com.github.nqnt.settings.NqntSettingsConfigurable"
